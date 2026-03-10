@@ -154,19 +154,28 @@ namespace SteeringCalcs
         // This will cause an overshoot of the target position.
         public static Vector2 SeekDirect(Vector2 currentPos, Vector2 targetPos, float maxSpeed)
         {
-            return Vector2.zero;
+        Vector2 desiredDirection = (targetPos - currentPos).normalized;
+        return desiredDirection * maxSpeed;
         }
 
         // Arrvie returns a desired velocity to reach a target position,
         // where the velocity is scaled by the distance to the target to avoid overshooting.
         public static Vector2 ArriveDirect(Vector2 currentPos, Vector2 targetPos, float radius, float maxSpeed)
         {
-            return Vector2.zero;
+        Vector2 toTarget = targetPos - currentPos;
+        float distance = toTarget.magnitude;
+
+        if (distance > radius) {
+        return toTarget.normalized * maxSpeed;
+        } else {
+        return toTarget.normalized * maxSpeed * (distance / radius);
+        }
         }
 
         public static Vector2 FleeDirect(Vector2 currentPos, Vector2 predatorPos, float maxSpeed)
         {
-            return Vector2.zero;
+           Vector2 desiredDirection = (currentPos - predatorPos).normalized;
+           return desiredDirection * maxSpeed;
         }
 
         // Find an avoidance target position for the given current and target positions.
@@ -175,26 +184,74 @@ namespace SteeringCalcs
         // You'll also probably want to use the rotate() method declared above.
         public static Vector2 GetAvoidanceTarget(Vector2 currentPos, Vector2 targetPos, AvoidanceParams avoidParams)
         {
-            return targetPos;
+        Vector2 direction = (targetPos - currentPos).normalized;
+        float distance = Vector2.Distance(currentPos, targetPos);
+
+        float castRadius = 0.5f;
+
+        RaycastHit2D hit = Physics2D.CircleCast(currentPos, castRadius, direction, distance, avoidParams.ObstacleMask);
+
+        if (!hit)
+        return targetPos;
+
+        float angleStep = 10f;
+        float maxAngle = 90f;
+
+        for (float angle = angleStep; angle <= maxAngle; angle += angleStep)
+        {
+        Vector2 dir1 = rotate(direction, angle);
+        Vector2 dir2 = rotate(direction, -angle);
+
+        RaycastHit2D hit1 = Physics2D.CircleCast(currentPos, castRadius, dir1, distance, avoidParams.ObstacleMask);
+        RaycastHit2D hit2 = Physics2D.CircleCast(currentPos, castRadius, dir2, distance, avoidParams.ObstacleMask);
+
+        if (!hit1)
+            return currentPos + dir1 * distance;
+
+        if (!hit2)
+            return currentPos + dir2 * distance;
+        }
+
+        return targetPos;
         }
 
         // See the assignment spec for an explanation of this method
         public static Vector2 GetSeparation(Vector2 currentPos, List<Transform> neighbours, float maxSpeed)
         {
-            return Vector2.zero;
+            if (neighbours.Count == 0) return Vector2.zero;
+
+            Vector2 separationSum = Vector2.zero;
+            foreach (Transform n in neighbours) {
+            Vector2 awayFromNeighbour = currentPos - (Vector2)n.position;
+            separationSum += awayFromNeighbour.normalized / awayFromNeighbour.magnitude;
+            }
+            return separationSum.normalized * maxSpeed;
         }
 
         // See the assignment spec for an explanation of this method
         public static Vector2 GetCohesion(Vector2 currentPos, List<Transform> neighbours, float maxSpeed)
         {
-            return Vector2.zero;
+            if (neighbours.Count == 0) return Vector2.zero;
+        Vector2 centerOfMass = Vector2.zero;
+        foreach (Transform n in neighbours) {
+        centerOfMass += (Vector2)n.position;
+         }
+        centerOfMass /= neighbours.Count;
+
+        return SeekDirect(currentPos, centerOfMass, maxSpeed);
         }
 
         // See the assignment spec for an explanation of this method
         public static Vector2 GetAlignment(List<Transform> neighbours, float maxSpeed)
         {
-            return Vector2.zero;
-        }
+        if (neighbours.Count == 0) return Vector2.zero;
+
+        Vector2 averageVelocity = Vector2.zero;
+        foreach (Transform n in neighbours) {
+         averageVelocity += (Vector2)n.up; 
+         }
+         return averageVelocity.normalized * maxSpeed;
+         }
 
         #endregion
     }
