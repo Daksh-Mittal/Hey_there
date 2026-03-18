@@ -4,6 +4,8 @@ namespace Globals
     {
         // Velocity threshold for the frog and snakes' animations to update.
         public const float MIN_SPEED_TO_ANIMATE = 1.0f;
+        public const float SLEEP_TIME = 2.0f;
+
 
         // The distance at which a target is considered to be reached.
         // For the frog, target = flag position after right-clicking.
