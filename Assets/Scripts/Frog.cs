@@ -17,6 +17,10 @@ public class Frog : MonoBehaviour
     public float MaxAccel;
     public float AccelTime;
 
+    // Bubble shooting 
+    public GameObject BubblePrefab; 
+    public Transform MouthPoint;
+
     // The arrival radius is set up to be dynamic, depending on how far away
     // the player left-clicks from the frog
     public float ArrivePct;
@@ -65,6 +69,11 @@ public class Frog : MonoBehaviour
 
             _flag.position = (Vector2)_lastClickPos + new Vector2(0.55f, 0.55f);
             _flagSr.enabled = true;
+        }
+
+        if (Keyboard.current.spaceKey.wasPressedThisFrame)
+        { 
+            Instantiate(BubblePrefab, MouthPoint.position, transform.rotation);
         }
     }
 
